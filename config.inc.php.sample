@@ -1,0 +1,4 @@
+<?php 
+	//Visit http://backbone.drop.io to apply for a Rich Media Backbone API key
+	$API_KEY = 'YOUR_API_KEY';
+?>

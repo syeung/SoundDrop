@@ -1,0 +1,19 @@
+# ignore annoying OS artifacts
+*~
+.DS_Store
++*#
+.#*
+*.swp
+._*
+.bundle
+spec.opts
+
+# ignore all .inc.php files
+*.inc.php
+
+# but not the .inc.php sample files
+!.inc.php.sample
+
+# ignore log files
+*.log
+
