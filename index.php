@@ -998,14 +998,6 @@ foreach ($albums[$album] as $name=>$a) {
 
 				$metadata  = "<div class='metadata' id='wrap_je_".$a->name."' style='display:none;'>";
 				$metadata .= "<div class='metadata' id='je_".$a->name."' '></div>";
-				$metadata .= "<script type='text/javascript'>$(function(){";
-				$metadata .= "je=$('#je_".$a->name."');";
-				$metadata .= "je.jsoneditor('init', {
-						root:'metadata',
-						data:" . $data . "});});";
-				$metadata .= "</script>";
-				$metadata .= '<input type="button" value="save"';
-				$metadata .= " onclick=\"updateAsset('".$a->name."',$('#je_".$a->name."').jsoneditor('getjson'));\" />";
 				$metadata .= "</div>";
 
 var_dump($jsondata);
