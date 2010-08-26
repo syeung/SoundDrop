@@ -245,7 +245,7 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 <html xmlns="http://www.w3.org/1999/xhtml"> 
  
 <head> 
-	<title>SoundDrop :: Drop <?php echo $displayname; ?></title>
+	<title>SoundDrop :: <?php echo $displayname; ?></title>
 	<style type="text/css">
 		#assets{
 			
@@ -306,6 +306,18 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 		});
 		});
 
+		$(document).ready(function() {
+		$('#upcover').uploadify({
+		'uploader'  : 'uploadify/uploadify.swf',
+		'script'    : '<?php echo Dropio_Api::UPLOAD_URL; ?>',
+		'multi'     : false,
+		'scriptData': {'api_key': '<?php echo $API_KEY; ?>', 'version':'3.0','drop_name': '<?php echo $dropname; ?>','description': '\{\"album\"\:\"<?php echo strtolower(trim($_REQUEST['album'])); ?>\"\,\"isalbumcover\"\:\"true\"\}'},
+		'cancelImg' : 'uploadify/cancel.png',
+		'auto'      : true,
+		'onAllComplete' : function(){setTimeout(window.location = '<?php echo "http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?viewmode=".$_REQUEST["viewmode"]."&dropname=". $dropname;  if($_REQUEST['album']) { echo "&album=".$_REQUEST['album']; } ?>',3000);}, 
+		'folder'    : '/uploads'
+		});
+		});
 		// ]]></script>
 		
 		
@@ -348,15 +360,48 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 		<script type="text/javascript" src="<?php echo $docroot; ?>jsoneditor/jquery.jsoneditor.js"></script> 
 		
 		<script type="text/javascript">
+
+			function grabMetadata(assetid) {
+				obj = new Object();
+				obj['title'] = $('#' + assetid + '-title').val();
+				obj['album'] = $('#' + assetid + '-album').val();
+				obj['tracknum'] = $('#' + assetid + '-tracknum').val();
+				obj['year'] = $('#' + assetid + '-year').val();
+				obj['genre'] = $('#' + assetid + '-genre').val();
+				obj['bpm'] = $('#' + assetid + '-bpm').val();
+				obj['composer'] = $('#' + assetid + '-composer').val();
+
+				if ($('#' + assetid + '-allowdownload').attr('checked') == true) {
+					obj['allowdownload'] = "true";
+				} else {
+					obj['allowdownload'] = "false";
+				}
+
+				if ($('#' + assetid + '-featured3').attr('checked') == true) {
+					obj['featured3'] = "true"
+				} else {	
+					obj['featured3'] = "false"
+				}
+				 
+				if ($('#' + assetid + '-isalbumcover').attr('checked') == true) {
+					obj['isalbumcover'] = "true";
+				} else {
+					obj['isalbumcover'] = "false";
+				}
+				updateAsset(assetid, obj);
+//				delete obj;
+			}
+
+
 			function updateAsset(assetid, data){
 				$('#wrap_je_' + assetid).toggle(400);
 				if(assetid != "band-details"){
 					var rawjsondata = $.toJSON(data);
+					//Remove instances of consecutive mutliple spaces
 					jsondata = rawjsondata.replace(/ +/g, ' ').toLowerCase();
 				} else {
 					jsondata = $.toJSON(data).replace(/ +/g, ' ');
 				}
-				//alert('updating the asset ' + assetid + ' with the data ' + jsondata);
 				dataobj = {metadata:jsondata,
 					assetid:assetid,
 					action:'updateasset',
@@ -373,11 +418,14 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 				  		}});
 			}
 		</script>
+
+
+
 	<?php } ?>
 
 </head>
 <body>
-<div id='container' style='<?php if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && !($_REQUEST['album']) && !(preg_match('/chrome/i',$_SERVER['HTTP_USER_AGENT']))) { ?> width: 1140px; <?php } else if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && !($_REQUEST['album']) && (preg_match('/chrome/i',$_SERVER['HTTP_USER_AGENT']))) { ?> width: 1190px;<?php } else { ?> width: 900px; <?php } ?> margin: 0 auto; padding: 20px 60px 60px;'>
+<div id='container' style='<?php if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && !($_REQUEST['album']) && !(preg_match('/safari/i',$_SERVER['HTTP_USER_AGENT']))) { ?> width: 1140px; <?php } else if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && !($_REQUEST['album']) && (preg_match('/safari/i',$_SERVER['HTTP_USER_AGENT']))) { ?> width: 1190px;<?php } else { ?> width: 900px; <?php } ?> margin: 0 auto; padding: 20px 60px 60px;'>
 <?php 
 
 if($mail_sent){
@@ -791,15 +839,22 @@ if(!($_REQUEST['album'])) {
 if(${'album_'.$_REQUEST['album']}) {
 ?>
 <div id="uploader2" style="background:#ffffff;-moz-border-radius:20px;-webkit-border-radius:20px;width:660px;padding:10px 20px 20px 20px;margin-top:30px">
-	<h1>Upload new files <?php if($_REQUEST['album'] && ($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode']))) {  echo 'to this album'; }?></h1>
+	<h1>Upload new files to this album</h1>
 	<input id="file" name="file" type="file" />
+	<br>
+	<hr />
+	<h1>Upload new album cover</h1>
+	<input id="upcover" name="upcover" type="file" />
 	<br>
 
 </div>
 <br>
 <?php
-} }
+} } ?>
 
+<br><br>
+
+<?php
 if(isUserLoggedIn()) {
 	echo "<a href='logout.php'>Log out</a>";
 } else {
@@ -811,33 +866,6 @@ if(isUserLoggedIn()) {
 </div>
 </body></html>
 <?php
-function SendAssetEmail($a, $emails){
-global $drop, $assets, $API_KEY, $dropname, $enabled_cdns, $assetCount;
-//define the receiver of the email
-$to = $emails;
-//define the subject of the email
-$subject = 'You\'ve been sent a file using the Drop.io RMB PHP demo'; 
-//define the headers we want passed. Note that they are separated with \r\n
-$headers = "From: eric@dropio.com\r\nReply-To: eric@dropio.com\r\n";
-//add boundary string and mime type specification
-// Always set content-type when sending HTML email
-$headers .= "MIME-Version: 1.0" . "\r\n";
-$headers .= "Content-type:text/html;charset=iso-8859-1" . "\r\n";
-//define the body of the message.
-$message = '<h2>You\'ve been sent the file '. $a->{$a->primary_key} .'</h2>
-<p>You can check this file out here:<br /><a href="http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?viewmode=permalink&assetid='.$a->{$a->primary_key}.'&dropname='. $dropname .'">http://' . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . '?viewmode=permalink&assetid='.$a->{$a->primary_key}.'&dropname='. $dropname .'</a></p> 
-';
-
-if(in_array($a->type, array('image','note', 'link'))){
-	$message .= '<h3>Preview:</h3>';
-	$message .= GetAssetPreview($a);
-}
-
-//send the email
-//echo 'sending to ' . $to;
-$mail_sent = @mail( $to, $subject, $message, $headers );
-return($mail_sent);
-}
 function GetAssetPreview($a){
 global $detect, $docroot;
 if ($a->type == "image"){
@@ -997,10 +1025,38 @@ foreach ($albums[$album] as $name=>$a) {
 				$jsondata = json_decode($data);
 
 				$metadata  = "<div class='metadata' id='wrap_je_".$a->name."' style='display:none;'>";
-				$metadata .= "<div class='metadata' id='je_".$a->name."' '></div>";
-				$metadata .= "</div>";
+				$metadata .= "<div class='metadata' id='je_".$a->name."' '>";
+				$metadata .= "<form><table>";
+				$metadata .= "<tr><td>Title:</td><td><input type='text' id='$a->name-title' value='$jsondata->title' /></td></tr>";
+				$metadata .= "<tr><td>Album:</td><td><input type='text' id='$a->name-album' value='$jsondata->album' /></td></tr>";
+				if($a->type == 'audio') {
+					$metadata .= "<tr><td>Track #:</td><td><input type='text' id='$a->name-tracknum' value='$jsondata->tracknum' /></td></tr>";
+					$metadata .= "<tr><td>Year:</td><td><input type='text' id='$a->name-year' value='$jsondata->year' /></td></tr>";
+					$metadata .= "<tr><td>Genre:</td><td><input type='text' id='$a->name-genre' value='$jsondata->genre' /></td></tr>";
+					$metadata .= "<tr><td>BPM:</td><td><input type='text' id='$a->name-bpm' value='$jsondata->bpm' /></td></tr>";
+					$metadata .= "<tr><td>Composer:</td><td><input type='text' id='$a->name-composer' value='$jsondata->composer' /></td></tr>";
+					$metadata .= "<tr><td>Featured 3?:</td><td><input type='checkbox' id='$a->name-featured3' ";
+					if($jsondata->featured3 == 'true') {
+						$metadata .= "checked ";
+					}
+					$metadata .= "/></td></tr>";
+				} else if($a->type = 'image') {
+					$metadata .= "<tr><td>Is Album Cover?:</td><td><input type='checkbox' id='$a->name-isalbumcover' ";
+					if($jsondata->isalbumcover == 'true') {
+						$metadata .= "checked ";
+					}
+					$metadata .= "/></td></tr>";
+				}
+				$metadata .= "<tr><td>Allow Download?:</td><td><input type='checkbox' id='$a->name-allowdownload' ";
+				if($jsondata->allowdownload == 'true') {
+					$metadata .= "checked ";
+				}
+				$metadata .= "/></td></tr></table>";
+				$metadata .= '<input type="button" value="Save"';
+//Data should pass through function that turns data into object, then to updateAsset()
+				$metadata .= " onclick=\"grabMetadata('".$a->name."');\" />";
+				$metadata .= "</form></div></div>";
 
-var_dump($jsondata);
 
 				if($_REQUEST['title'] && $jsondata->title != $_REQUEST['title']) {
 					continue;
@@ -1034,7 +1090,6 @@ var_dump($jsondata);
 					continue;
 				}
 
-			//	echo print_r($a);		
 		?>
 		<tr>
 			<td>
@@ -1056,7 +1111,6 @@ var_dump($jsondata);
 
 
 				$preview = GetAssetPreview($a);
-				//$preview .= 'Embed Code: <textarea rows="2" columns="60">' . htmlspecialchars(GetAssetPreview($a)) . '</textarea>';
 
 				echo $preview; 
 				if($a->type == 'audio') {
@@ -1085,13 +1139,6 @@ var_dump($jsondata);
 				}
 				
 			?>
-					<div id="emailthis-<?php echo $a->name; ?>" style="display:none;"><form action="<?php echo $_COOKIE['redirect_to']; ?>" method="post"> 
-<input type="text" name="emailaddresses" /><br />
-<input type="hidden" name="assetid" value="<?php echo $a->name;  ?>" />
-<input type="hidden" name="dropname" value="<?php echo $dropname; ?>" />
-<input type="hidden" name='viewmode' value='<?php echo $_REQUEST["viewmode"]; ?>' />
-<input type="hidden" name="action" value="emailthis" />
-<input type="submit" value="Send this asset" /></form></div>
 				<?php if ($metadata){echo $metadata;}?>
 				</td>
 					<td><?php if ($a->type != "note") {
@@ -1101,7 +1148,7 @@ var_dump($jsondata);
 						if($owner == $loggedInUser->clean_username) { ?>
 							<a href="<?php echo $origfile; ?>">Download File</a>
 						<?php } else { ?>
-							Download locked<hr />
+							Download locked
 					<?php } } } ?>
 
 
@@ -1214,7 +1261,6 @@ foreach ($assets as $name=>$a) {
 
 
 				$preview = GetAssetPreview($a);
-				//$preview .= 'Embed Code: <textarea rows="2" columns="60">' . htmlspecialchars(GetAssetPreview($a)) . '</textarea>';
 				if($a->type =='document') {
 					echo "<div style='text-align:center'>".$preview."</div>"; 
 				} else {
@@ -1267,13 +1313,6 @@ foreach ($assets as $name=>$a) {
 				}
 				
 			?>
-					<div id="emailthis-<?php echo $a->{$a->primary_key}; ?>" style="display:none;"><form action="<?php echo $_COOKIE['redirect_to']; ?>" method="post"> 
-<input type="text" name="emailaddresses" /><br />
-<input type="hidden" name="assetid" value="<?php echo $a->{$a->primary_key};  ?>" />
-<input type="hidden" name="dropname" value="<?php echo $dropname; ?>" />
-<input type="hidden" name='viewmode' value='<?php echo $_REQUEST["viewmode"]; ?>' />
-<input type="hidden" name="action" value="emailthis" />
-<input type="submit" value="Send this asset" /></form></div>
 				<?php if ($metadata){echo $metadata;}?>
 				</td>
 					<td><?php if ($a->type != "note") {
@@ -1283,7 +1322,7 @@ foreach ($assets as $name=>$a) {
 						if($owner == $loggedInUser->clean_username) { ?>
 							<a href="<?php echo $origfile; ?>">Download File</a>
 						<?php } else { ?>
-							Download locked<hr />
+							Download locked
 					<?php } } } ?>
 
 						<?php
@@ -1351,7 +1390,7 @@ if($display == 'preview') {
 			$preview = GetAssetPreview($image);
 			$origfile = GetOriginalFileUrl($image);
 			if($i == 2) {
-				if(preg_match('/chrome/i',$_SERVER['HTTP_USER_AGENT'])) {
+				if(preg_match('/safari/i',$_SERVER['HTTP_USER_AGENT'])) {
 					echo "<td style='width: 277px'><a href='".$origfile."'>".$preview."</a></td>";
 				} else {
 					echo "<td style='width: 265px'><a href='".$origfile."'>".$preview."</a></td>";
@@ -1360,7 +1399,7 @@ if($display == 'preview') {
 				$i = 0;
 				$i++;
 			} else {
-				if(preg_match('/chrome/i',$_SERVER['HTTP_USER_AGENT'])) {
+				if(preg_match('/safari/i',$_SERVER['HTTP_USER_AGENT'])) {
 					echo "<td style='width: 277px'><a href='".$origfile."'>".$preview."</a></td>";
 				} else {
 					echo "<td style='width: 265px'><a href='".$origfile."'>".$preview."</a></td>";
