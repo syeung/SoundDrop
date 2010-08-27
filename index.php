@@ -326,15 +326,8 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 		       VideoJS.setup();
 		     })
 		</script>
-	<?php 
-	/* 
-		############################################################
-		### JSON metadata editor (refers to $.toJSON() function) ### 
-		############################################################  */ ?>
-		<link rel="stylesheet" type="text/css" href="jsoneditor/jsoneditor.css" />
-		
+
 		<script type="text/javascript" src="<?php echo $docroot; ?>jsoneditor/jquery.json-2.2.min.js"></script>
-		<script type="text/javascript" src="<?php echo $docroot; ?>jsoneditor/jquery.jsoneditor.js"></script> 
 		
 		<script type="text/javascript">
 
