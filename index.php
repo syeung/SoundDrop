@@ -27,7 +27,6 @@ setcookie('redirect_to', $lastdrop);
 if(!empty($dropname)){
 	$drop = Dropio_Drop::load($dropname);
 }else if($_REQUEST['newdrop']){
-//	die('Wouldve made a new drop');
 	if(!isUserLoggedIn()){
 		header("Location: login.php");
 		die();
@@ -53,12 +52,6 @@ if(!empty($dropname)){
 	}
 }
 
-
-//Set the CDNs we'd like to provide. These will be appended to download urls with the "via" parameter
-$enabled_cdns = array('akamai','voxel','limelight');
-
-//Set the output locations possible for uploads. You can create new output locations under the API tab in your account
-$output_locations = array('DropioS3');
 
 //Define types available
 $alltypes = array("image", "movie", "audio", "document", "other", "note");
@@ -209,13 +202,10 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 	}
 }else if($_REQUEST["action"] == "updateasset" && $_REQUEST["assetid"]){
  	if(isUserLoggedIn()){
-	//iterate through assets
 	$updated = '';
  	foreach($assets as $a){
 		if($a->{$a->primary_key} == $_REQUEST["assetid"]){
-			//check if data is safe
 			if(json_decode(stripslashes($_REQUEST["metadata"]))){
-				//encode the json data with htmlspecialchars to avoid filtering on the drop.io side
 				$a->description = htmlspecialchars(stripslashes($_REQUEST["metadata"]));
 				$updated = $a->save();
 			}
@@ -265,9 +255,7 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 
 		<script type="text/javascript">// <![CDATA[
 
-		//Lists necessary json forms
-		//Not very pretty, but gets the job done
-		var jsonforms = '\{\"title\"\:\"\"\,\"album\"\:\"<?php if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && $_REQUEST['album'] && ${'album_'.$_REQUEST['album']}) { echo strtolower($_REQUEST['album']); }?>\"\,\"tracknum\"\:\"\"\,\"year\"\:\"\"\,\"genre\"\:\"\"\,\"bpm\"\:\"\"\,\"composer\"\:\"\"\,\"allowdownload\"\:\"true\"\,\"featured3\"\:\"set me as \'true\' without quotes\"\,\"isalbumcover\"\:\"set me as \'true\' without quotes\"\}'
+		var jsonforms = '\{\"title\"\:\"\"\,\"album\"\:\"<?php if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && $_REQUEST['album'] && ${'album_'.$_REQUEST['album']}) { echo strtolower($_REQUEST['album']); }?>\"\,\"tracknum\"\:\"\"\,\"year\"\:\"\"\,\"genre\"\:\"\"\,\"bpm\"\:\"\"\,\"composer\"\:\"\"\,\"allowdownload\"\:\"true\"\,\"isalbumcover\"\:\"false\"\}'
 
 		$(document).ready(function() {
 		$('#uplogo').uploadify({
@@ -340,9 +328,9 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 		</script>
 	<?php 
 	/* 
-		######################################### 
-		### JSON metadata editor (deprecated) ### 
-		#########################################  */ ?>
+		############################################################
+		### JSON metadata editor (refers to $.toJSON() function) ### 
+		############################################################  */ ?>
 		<link rel="stylesheet" type="text/css" href="jsoneditor/jsoneditor.css" />
 		
 		<script type="text/javascript" src="<?php echo $docroot; ?>jsoneditor/jquery.json-2.2.min.js"></script>
@@ -372,12 +360,6 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 						obj['allowdownload'] = "true";
 					} else {
 						obj['allowdownload'] = "false";
-					}
-
-					if ($('#' + assetid + '-featured3').attr('checked') == true) {
-						obj['featured3'] = "true"
-					} else {	
-						obj['featured3'] = "false"
 					}
 					 
 					if ($('#' + assetid + '-isalbumcover').attr('checked') == true) {
@@ -420,9 +402,9 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 <?php 
 
 /* 
-####################################################################################### 
-###Media rendering mode################################################################ 
-#######################################################################################  */ ?>
+############################
+### Media rendering mode ### 
+############################ */ ?>
 <?php 
 if ($_REQUEST["viewmode"] == 'media' || $_REQUEST["viewmode"] == 'permalink') 
 { ?>
@@ -467,24 +449,12 @@ if ($_REQUEST["viewmode"] == 'media' || $_REQUEST["viewmode"] == 'permalink')
 	<br /><br />
 
 </div>
-<script type="text/javascript">
-	function makeol(){
-		var chks = $$("input");
-		var olval = [];
-		chks.each( function( element ) {
-			if(element.type == 'checkbox' && element.checked){
-				olval.push(element.value);
-			} 
-		});
-		$("olfield").value = olval.join(",");
-	}
-</script>
 
 	<?php /* 
-	####################################################################################### 
-	###Sorted (grouped) rendering mode##################################################### 
-	#######################################################################################  */ ?>
-<?php 
+	#################################
+	### Album list rendering mode ###
+	################################# */ ?>
+<?php
 } else if (empty($_REQUEST["viewmode"]) || $_REQUEST["viewmode"] == 'albums') 
 { ?>
 <style type="text/css">
@@ -630,8 +600,13 @@ if (document.listalbum.selection.value != null) {
 
 </div>
 
+<?php /*
+#####################################
+### Sorted (group rendering mode) ###
+##################################### */ ?>
 
-<?php } else if ($_REQUEST["viewmode"] == 'sorted') { ?>
+<?php
+} else if ($_REQUEST["viewmode"] == 'sorted') { ?>
 <style type="text/css">
 	body{background:url('<?php echo $docroot; ?>images/fancybg.png') #dbdbdb repeat-x;}
 	table{border:1px solid #aaaaaa;}
@@ -703,8 +678,10 @@ if(!($_REQUEST['album'])) {
 if(${'album_'.$_REQUEST['album']}) {
 ?>
 <div id="uploader2" style="background:#ffffff;-moz-border-radius:20px;-webkit-border-radius:20px;width:660px;padding:10px 20px 20px 20px;margin-top:30px">
-	<h1>Upload new files to this album</h1>
+	<h1>Upload new files to this album*</h1>
 	<input id="file" name="file" type="file" />
+	<br>
+	*You can select multiple files with CTRL + Left Click
 	<br>
 	<hr />
 	<h1>Upload new album cover</h1>
@@ -733,14 +710,12 @@ if(isUserLoggedIn()) {
 function GetAssetPreview($a){
 global $detect, $docroot;
 if ($a->type == "image"){
-	//first, get some info from the original content
 	foreach ($a->roles as $name=>$r) { 
 		if ($r["name"] == "original_content"){
 			$dimensions['width'] = $r["width"];
 			$dimensions['height'] = $r["height"];
 		}
 	}
-	//now, display the image
 	foreach ($a->roles as $name=>$r) { 
 		if ($r["name"] == "large_thumbnail"){ 
 			if ($r["locations"][0]["status"] == "complete"){
@@ -753,7 +728,7 @@ if ($a->type == "image"){
 				$preview .= "\" alt='";
 				$preview .= htmlspecialchars($a->name);
 				$preview .= "'>";
-				//If you wanted to echo the original width and height of the uploaded file, you can do that here:
+				//Original dimensions
 				//$preview .= "<br />Original width = " . $dimensions['width'] . ", height = " .$dimensions['height'];
 			}
 		}
@@ -861,18 +836,13 @@ return $origfile;
 
 
 function GetAssetsByAlbum($album,$display = 'preview'){
-global $drop, $assets, $API_KEY, $dropname, $enabled_cdns, $assetCount, $owner, $loggedInUser, $albumlist, $albums ;
+global $drop, $assets, $API_KEY, $dropname, $assetCount, $owner, $loggedInUser, $albumlist, $albums ;
 $page = 1;
 
-//Do if jsondata states track is featured
-//OR
-//Add to val counter if looped over occurance where featured is true
 if($display = 'preview') {
 	$val = 0;
 }
 
-//Need to somehow set ${'album_'.$album} as global variable
-#if(${'album_'.$album}) {
 foreach($albums[$album]->tracks as $x) {
 	$albums[$album]->tracks = (object) $x;
 foreach ($albums[$album] as $name=>$a) {
@@ -899,17 +869,14 @@ foreach ($albums[$album] as $name=>$a) {
 					$metadata .= "<tr><td>Genre:</td><td><input type='text' id='$a->name-genre' value='$jsondata->genre' /></td></tr>";
 					$metadata .= "<tr><td>BPM:</td><td><input type='text' id='$a->name-bpm' value='$jsondata->bpm' /></td></tr>";
 					$metadata .= "<tr><td>Composer:</td><td><input type='text' id='$a->name-composer' value='$jsondata->composer' /></td></tr>";
-					$metadata .= "<tr><td>Featured 3?:</td><td><input type='checkbox' id='$a->name-featured3' ";
-					if($jsondata->featured3 == 'true') {
-						$metadata .= "checked ";
-					}
-					$metadata .= "/></td></tr>";
-				} else if($a->type = 'image') {
+				} else if($a->type == 'image') {
 					$metadata .= "<tr><td>Is Album Cover?:</td><td><input type='checkbox' id='$a->name-isalbumcover' ";
 					if($jsondata->isalbumcover == 'true') {
 						$metadata .= "checked ";
 					}
 					$metadata .= "/></td></tr>";
+				} else {
+					
 				}
 				$metadata .= "<tr><td>Allow Download?:</td><td><input type='checkbox' id='$a->name-allowdownload' ";
 				if($jsondata->allowdownload == 'true') {
@@ -1033,15 +1000,12 @@ foreach ($albums[$album] as $name=>$a) {
 				break 2;
 			}
 		}
-		
-#	}
-			
 	} }
 }
 
 
 function GetAssetsByType($type = array("image", "movie", "audio", "document", "other", "note", "link")){
-global $drop, $assets, $API_KEY, $dropname, $enabled_cdns, $assetCount, $owner, $loggedInUser ;
+global $drop, $assets, $API_KEY, $dropname, $assetCount, $owner, $loggedInUser ;
 $page = 1;
 foreach ($assets as $name=>$a) {
 		if(in_array($a->type, $type)){
@@ -1053,8 +1017,6 @@ foreach ($assets as $name=>$a) {
 				$data = '{}';
 				if(json_decode(stripslashes(htmlspecialchars_decode($description)))){
 					$data = stripslashes(htmlspecialchars_decode($description));
-					//just text in the description. Display it.
-//					echo "<br />" . $description;
 				}
 				$jsondata = json_decode($data);
 
@@ -1064,7 +1026,7 @@ foreach ($assets as $name=>$a) {
 				if($a->type == 'note') {
 					$metadata .= "<tr><td>Band Name:</td><td><input type='text' id='$a->name-bandname' value='$jsondata->bandname' /></td></tr>";
 					$metadata .= "<tr><td>Hometown:</td><td><input type='text' id='$a->name-hometown' value='$jsondata->hometown' /></td></tr>";
-					$metadata .= "<tr><td>Genres:</td><td><input type='text' id='$a->name-bandgenres' value='$jsondata->bandgenre' /></td></tr>";
+					$metadata .= "<tr><td>Genres:</td><td><input type='text' id='$a->name-bandgenres' value='$jsondata->bandgenres' /></td></tr>";
 					$metadata .= "<tr><td>Years Active:</td><td><input type='text' id='$a->name-yearsactive' value='$jsondata->yearsactive' /></td></tr>";
 					$metadata .= "<tr><td>Members:</td><td><input type='text' id='$a->name-members' value='$jsondata->members' /></td></tr>";
 					$metadata .= "<tr><td>Motto:</td><td><input type='text' id='$a->name-motto' value='$jsondata->motto' /></td></tr>";
@@ -1080,12 +1042,7 @@ foreach ($assets as $name=>$a) {
 						$metadata .= "<tr><td>Genre:</td><td><input type='text' id='$a->name-genre' value='$jsondata->genre' /></td></tr>";
 						$metadata .= "<tr><td>BPM:</td><td><input type='text' id='$a->name-bpm' value='$jsondata->bpm' /></td></tr>";
 						$metadata .= "<tr><td>Composer:</td><td><input type='text' id='$a->name-composer' value='$jsondata->composer' /></td></tr>";
-						$metadata .= "<tr><td>Featured 3?:</td><td><input type='checkbox' id='$a->name-featured3' ";
-						if($jsondata->featured3 == 'true') {
-							$metadata .= "checked ";
-						}
-						$metadata .= "/></td></tr>";
-					} else if($a->type = 'image') {
+					} else if($a->type == 'image') {
 						$metadata .= "<tr><td>Is Album Cover?:</td><td><input type='checkbox' id='$a->name-isalbumcover' ";
 						if($jsondata->isalbumcover == 'true') {
 							$metadata .= "checked ";
@@ -1135,7 +1092,6 @@ foreach ($assets as $name=>$a) {
 					continue;
 				}
 
-			//	echo print_r($a);		
 		?>
 		<tr>
 			<td>

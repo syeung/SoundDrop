@@ -39,7 +39,7 @@ if($owner && $owner == $loggedInUser->clean_username && isUserLoggedIn()) {
 <link rel="stylesheet" type="text/css" media="screen, projection" href="uploadify/uploadify.css" />
 
 <script type="text/javascript">
-		var rawjsonforms = "\{\"title\"\:\"\"\,\"album\"\:\"<?php echo $newalbum; ?>\"\,\"tracknum\"\:\"\"\,\"year\"\:\"\"\,\"genre\"\:\"\"\,\"bpm\"\:\"\"\,\"composer\"\:\"\"\,\"allowdownload\"\:\"true\"\,\"featured3\"\:\"set me as \'true\' without quotes\"\,\"isalbumcover\"\:\"set me as \'true\' without quotes\"\}"
+		var rawjsonforms = "\{\"title\"\:\"\"\,\"album\"\:\"<?php echo $newalbum; ?>\"\,\"tracknum\"\:\"\"\,\"year\"\:\"\"\,\"genre\"\:\"\"\,\"bpm\"\:\"\"\,\"composer\"\:\"\"\,\"allowdownload\"\:\"true\"\,\"isalbumcover\"\:\"false\"\}"
 		var jsonforms = rawjsonforms.replace(/ +/g, ' ');
 
 		$(document).ready(function() {
