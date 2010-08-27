@@ -225,16 +225,6 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 	#header("Location:http://" . $_SERVER["HTTP_HOST"] . $_SERVER["PHP_SELF"] . "?viewmode=".$_REQUEST["viewmode"]."&dropname=". $dropname);
 	die(json_encode($a));
 	}
-}else if($_REQUEST["action"] == "emailthis" && $_REQUEST["assetid"]){
- 	//iterate through assets
-	$counter = 0;
- 	foreach($assets as $a){
-		if($a->{$a->primary_key} == $_REQUEST["assetid"]){
-			$mail_sent = SendAssetEmail($a, $_REQUEST["emailaddresses"]);
-			break;
-		}
-		$counter++;
-	}
 }
 
 ?>
@@ -264,11 +254,10 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 	
 	<?php
 	/* 
-		####################################################################################### 
-		### Uploadify uploader script (for all modes but detailed) ############################ 
-		#######################################################################################  */ 
-	 if($_REQUEST['viewmode'] != 'detailed'){  
-			?>
+		################################# 
+		### Uploadify uploader script ### 
+		#################################  */ 
+		?>
 		<script type="text/javascript" src="<?php echo $docroot; ?>uploadify/jquery-1.3.2.min.js"></script>
 		<script type="text/javascript" src="<?php echo $docroot; ?>uploadify/swfobject.js"></script>
 		<script type="text/javascript" src="<?php echo $docroot; ?>uploadify/jquery.uploadify.v2.1.0.min.js"></script>
@@ -324,9 +313,9 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 	
 	<?php 
 	/* 
-		####################################################################################### 
-		### Audio player (for all modes but detailed)              ############################ 
-		#######################################################################################  */ ?>
+		#################### 
+		### Audio player ### 
+		####################  */ ?>
 		<script type="text/javascript" src="<?php echo $docroot; ?>audio-player/audio-player.js"></script>
 		<script type="text/javascript">  
             AudioPlayer.setup("audio-player/player.swf", {  
@@ -338,9 +327,9 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
         </script>
 	<?php 
 	/* 
-		####################################################################################### 
-		### HTML5 video player (for all modes but detailed)        ############################ 
-		#######################################################################################  */ ?>
+		########################## 
+		### HTML5 video player ### 
+		##########################  */ ?>
 		<link rel="stylesheet" href="<?php echo $docroot; ?>video-js/video-js.css" type="text/css" media="screen" title="Video JS" charset="utf-8">
 		<script src="<?php echo $docroot; ?>video-js/video.js" type="text/javascript" charset="utf-8"></script>
 		<script type="text/javascript" charset="utf-8">
@@ -351,9 +340,9 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 		</script>
 	<?php 
 	/* 
-		####################################################################################### 
-		### JSON metadata editor (for all modes but detailed)      ############################ 
-		#######################################################################################  */ ?>
+		######################################### 
+		### JSON metadata editor (deprecated) ### 
+		#########################################  */ ?>
 		<link rel="stylesheet" type="text/css" href="jsoneditor/jsoneditor.css" />
 		
 		<script type="text/javascript" src="<?php echo $docroot; ?>jsoneditor/jquery.json-2.2.min.js"></script>
@@ -361,35 +350,43 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 		
 		<script type="text/javascript">
 
-			function grabMetadata(assetid) {
+			function grabMetadata(assetid, type) {
 				obj = new Object();
-				obj['title'] = $('#' + assetid + '-title').val();
-				obj['album'] = $('#' + assetid + '-album').val();
-				obj['tracknum'] = $('#' + assetid + '-tracknum').val();
-				obj['year'] = $('#' + assetid + '-year').val();
-				obj['genre'] = $('#' + assetid + '-genre').val();
-				obj['bpm'] = $('#' + assetid + '-bpm').val();
-				obj['composer'] = $('#' + assetid + '-composer').val();
-
-				if ($('#' + assetid + '-allowdownload').attr('checked') == true) {
-					obj['allowdownload'] = "true";
+				if(type == 'note') {
+					obj['bandname'] = $('#' + assetid + '-bandname').val();
+					obj['hometown'] = $('#' + assetid + '-hometown').val();
+					obj['bandgenres'] = $('#' + assetid + '-bandgenres').val();
+					obj['yearsactive'] = $('#' + assetid + '-yearsactive').val();
+					obj['members'] = $('#' + assetid + '-members').val();
+					obj['motto'] = $('#' + assetid + '-motto').val();
 				} else {
-					obj['allowdownload'] = "false";
-				}
+					obj['title'] = $('#' + assetid + '-title').val();
+					obj['album'] = $('#' + assetid + '-album').val();
+					obj['tracknum'] = $('#' + assetid + '-tracknum').val();
+					obj['year'] = $('#' + assetid + '-year').val();
+					obj['genre'] = $('#' + assetid + '-genre').val();
+					obj['bpm'] = $('#' + assetid + '-bpm').val();
+					obj['composer'] = $('#' + assetid + '-composer').val();
 
-				if ($('#' + assetid + '-featured3').attr('checked') == true) {
-					obj['featured3'] = "true"
-				} else {	
-					obj['featured3'] = "false"
-				}
-				 
-				if ($('#' + assetid + '-isalbumcover').attr('checked') == true) {
-					obj['isalbumcover'] = "true";
-				} else {
-					obj['isalbumcover'] = "false";
+					if ($('#' + assetid + '-allowdownload').attr('checked') == true) {
+						obj['allowdownload'] = "true";
+					} else {
+						obj['allowdownload'] = "false";
+					}
+
+					if ($('#' + assetid + '-featured3').attr('checked') == true) {
+						obj['featured3'] = "true"
+					} else {	
+						obj['featured3'] = "false"
+					}
+					 
+					if ($('#' + assetid + '-isalbumcover').attr('checked') == true) {
+						obj['isalbumcover'] = "true";
+					} else {
+						obj['isalbumcover'] = "false";
+					}
 				}
 				updateAsset(assetid, obj);
-//				delete obj;
 			}
 
 
@@ -397,7 +394,7 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 				$('#wrap_je_' + assetid).toggle(400);
 				if(assetid != "band-details"){
 					var rawjsondata = $.toJSON(data);
-					//Remove instances of consecutive mutliple spaces
+					//Remove instances of consecutive multiple spaces
 					jsondata = rawjsondata.replace(/ +/g, ' ').toLowerCase();
 				} else {
 					jsondata = $.toJSON(data).replace(/ +/g, ' ');
@@ -407,32 +404,21 @@ if($_REQUEST["action"] == "delete" && $_REQUEST["assetid"]){
 					action:'updateasset',
 					dropname:'<?php echo $dropname; ?>',
 					viewmode:'<?php echo $_REQUEST["viewmode"]; ?>'} ;
-				//console.log(dataobj);
 				$.ajax({type:'POST',data:dataobj
 						,success: function(data) {
-							//console.log(data);
 				    		alert('Saved metadata for ' + assetid + '.\nRefresh page to see changes.');
 				  		},error: function(data) {
-							//console.log(data);
 				    		alert('Error on ' + assetid);
 				  		}});
+				delete obj;
 			}
 		</script>
-
-
-
-	<?php } ?>
 
 </head>
 <body>
 <div id='container' style='<?php if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && !($_REQUEST['album']) && !(preg_match('/safari/i',$_SERVER['HTTP_USER_AGENT']))) { ?> width: 1140px; <?php } else if(($_REQUEST['viewmode'] == 'albums' || empty($_REQUEST['viewmode'])) && !($_REQUEST['album']) && (preg_match('/safari/i',$_SERVER['HTTP_USER_AGENT']))) { ?> width: 1190px;<?php } else { ?> width: 900px; <?php } ?> margin: 0 auto; padding: 20px 60px 60px;'>
 <?php 
 
-if($mail_sent){
-	echo "<h2>Mail sent</h2>";
-}else if($updated){
-	echo "<h2>asset updated</h2>";
-}
 /* 
 ####################################################################################### 
 ###Media rendering mode################################################################ 
@@ -468,15 +454,13 @@ if ($_REQUEST["viewmode"] == 'media' || $_REQUEST["viewmode"] == 'permalink')
 			}
 			?>
 
-			<h4>Switch to
-			<a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=detailed&dropname='.$dropname; ?>">detailed view</a> to see more information about these assets, or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=sorted&dropname='.$dropname; ?>">sorted by type</a> or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=albums&dropname='.$dropname; ?>">sorted by album</a>.</h4>
+			<h4>View assets <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=sorted&dropname='.$dropname; ?>">sorted by type</a> or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=albums&dropname='.$dropname; ?>">sorted by album</a>.</h4>
 
 	<?php } ?>
 
 		<br />
 		<table><tr><th width="225">File Name</th><th width="550">Preview</th><th width="50">Links</th></tr> 
 		<?php 
-			//passing no types will return all of them
 			GetAssetsByType();
 		?>
 		</table>
@@ -496,131 +480,12 @@ if ($_REQUEST["viewmode"] == 'media' || $_REQUEST["viewmode"] == 'permalink')
 	}
 </script>
 
-<?php
-/* 
-####################################################################################### 
-//### Detailed rendering mode ########################################################### 
-#######################################################################################  */ ?>
-
-<?php } else if($_REQUEST['viewmode'] == 'detailed'){
-	if(isUserLoggedIn() && $owner == $loggedInUser->clean_username) {
-	?>
-
-
-<div id="assets">
-	<h2>Examining the drop <?php echo $displayname; ?></h2>
-	
-	<h4>Switch to
-	<a href="<?php echo $_SERVER['PHP_SELF'] . '?dropname='.$dropname.'&viewmode=media'; ?>">media view</a> to see previews of these assets.</h4>
-
-	<br />
-	There are <?php echo  $drop->values['asset_count']; ?> items in this drop
-		<br />
-
-		<ul>
-		<?php 
-			foreach ($assets as $name=>$a) { ?>
-			<li>
-			<h2><?php echo  $a->name;  ?></h2>
-			<ul>
-			<?php  foreach ($a->roles as $name=>$r) { ?>
-				<li>Role: <?php echo  ($r["name"]); ?>
-					<ul>
-					<?php foreach ($r["locations"] as $name=>$loc) { ?>
-						<li>Location: <?php echo $loc["name"]; ?></li>
-						<?php if ($r["name"] == "original_content") { ?>
-							<?php 
-								$ocurl = "http://api.drop.io/drops/".$dropname."/assets/".$a->name."/download/original?api_key=".$API_KEY."&version=3.0";
-								if($loc["name"] != "DropioS3"){ $ocurl .= "&location=" . $loc["name"]; } 
-							?>
-							<ul><li><a href="<?php echo $ocurl; ?>">
-							Direct Download</a> or via 
-							<?php
-								unset($cdnout);
-								foreach ($enabled_cdns as $cdn){
-									$cdnout[] = '<a href="'. $ocurl . '&via=' . $cdn . '">' . $cdn . '</a>';
-								}
-							?>
-							<?php echo join($cdnout, ', '); ?>
-							</li></ul>	
-						<?php } else { ?>
-							<?php if($loc["status"] == "complete") { ?>
-								<ul><li><a href="<?php echo  $loc["file_url"] ?>">Direct Download</a> or via 
-								<?php
-									unset($cdnout);
-								 	foreach ($enabled_cdns as $cdn){
-										$cdnout[] = '<a href="'. $loc["file_url"] . '?via=' . $cdn . '">' . $cdn . '</a>';
-									}
-							
-									 ?>
-								<?php echo join($cdnout, ', ') ?>
-								</li></ul>
-							<?php } else { ?>
-									<ul><li><?php echo $loc["status"]?></li></ul>
-							<?php } ?>
-						<?php } ?>
-					<?php } ?>
-					</ul>
-				</li>
-			<?php } 
-			   ?>
-			</ul>
-			</li>
-		<?php  } 
-		?> </ul>
-		
-	<br /><br />
-
-</div>
-
-<?php if($loggedInUser && $loggedInUser->clean_username == $owner && isUserLoggedIn()) { ?>
-
-<script type="text/javascript">
-	function makeol(){
-		var chks = $$("input");
-		var olval = [];
-		chks.each( function( element ) {
-			if(element.type == 'checkbox' && element.checked){
-				olval.push(element.value);
-			} 
-		});
-		$("olfield").value = olval.join(",");
-	}
-</script>
-<div id="uploader">
-	<h1>Upload</h1>
-	<form action="<?php echo  Dropio_Api::UPLOAD_URL; ?>" enctype="multipart/form-data" method="post">
-	
-	<p><label for="file">Select File</label> : 
-		<input type="file" name="file" id="file" /></p>
-	<input type="hidden" name='api_key' value='<?php echo $API_KEY; ?>' />
-	<input type="hidden" name='version' value='3.0' />
-	<input type="hidden" name='drop_name' value='<?php echo $dropname; ?>' />
-	<input type="hidden" name='redirect_to' value='<?php echo  "http://" . $_SERVER["HTTP_HOST"]  . $_SERVER["REQUEST_URI"]; ?>' />
-	Output Locations: 
-	<?php foreach ($output_locations as $ol){  ?> 
-		<br />
-		<input type="checkbox" name='output_location[<?php echo  $ol; ?>]' id="" value='<?php echo  $ol; ?>'  onclick="makeol()" <?php if ($ol == "DropioS3") {echo  "checked";}  ?>/>
-		
-		
-		<label for="output_location[<?php echo  $ol; ?>]" ><?php echo  $ol; ?></label>
-		
-	<?php } ?>
-	<input type="hidden" name='output_locations' value='DropioS3' id='olfield' />
-<br />	<input type="submit" /></form>
-<br />	<br />	<br />	<br />
-</div>
-<?php } ?>
-
-<br />
-
-	<br />
 	<?php /* 
 	####################################################################################### 
 	###Sorted (grouped) rendering mode##################################################### 
 	#######################################################################################  */ ?>
 <?php 
-} } else if (empty($_REQUEST["viewmode"]) || $_REQUEST["viewmode"] == 'albums') 
+} else if (empty($_REQUEST["viewmode"]) || $_REQUEST["viewmode"] == 'albums') 
 { ?>
 <style type="text/css">
 	body{background:url('<?php echo $docroot; ?>images/fancybg.png') #dbdbdb repeat-x;}
@@ -673,8 +538,7 @@ if ($_REQUEST["viewmode"] == 'media' || $_REQUEST["viewmode"] == 'permalink')
 	}
 	?>
 
-	<h4>Switch to
-	<a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=detailed&dropname='.$dropname; ?>">detailed view</a> to see more information about these assets, or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=media&dropname='.$dropname; ?>">sorted by date</a> or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=sorted&dropname='.$dropname; ?>">sorted by type</a>.</h4>
+	<h4>View assets <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=media&dropname='.$dropname; ?>">sorted by date</a> or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=sorted&dropname='.$dropname; ?>">sorted by type</a>.</h4>
 
 <script language="javascript" type="text/javascript" >
 function viewalbum(x) {
@@ -708,26 +572,27 @@ if (document.listalbum.selection.value != null) {
 		<?php 
 		if($_REQUEST['album']) { 
 			$album = strtolower($_REQUEST['album']); ?>
-			<h2 style="font-size:20px"><?php echo ucwords($album); ?> </h2>
-			<?php
-			if(${$album.'_cover'}) {
-				echo ${$album.'_cover'}."<br><br>";
-			} ?>
-			<table><tr><th width="225">File Name</th><th width="550">Preview</th><th width="50">Links</th></tr>
-			<?php
-				GetAssetsByAlbum($album,'albumview');
-			?>
-			</table>
+			<?php if(${'album_'.$album}) { ?>
+				<h2 style="font-size:20px"><?php echo ucwords($album); ?> </h2>
+				<?php
+				if(${$album.'_cover'}) {
+					echo ${$album.'_cover'}."<br><br>";
+				} ?>
+				<table><tr><th width="225">File Name</th><th width="550">Preview</th><th width="50">Links</th></tr>
+				<?php
+					GetAssetsByAlbum($album,'albumview');
+				?>
+				</table>
 
-			<?php if(${$album.'_images'}) {?>
-			<br>
-			<h3>Images in this album</h3>
-			<table>
-			<?php
-				DisplayAlbumImages(${$album.'_images'},$album,'albumview');
-			?>
-			</table>
-			<?php }?>
+				<?php if(${$album.'_images'}) {?>
+				<br>
+				<h3>Images in this album</h3>
+				<table>
+				<?php
+					DisplayAlbumImages(${$album.'_images'},$album,'albumview');
+				?>
+				</table>
+			<?php } }?>
 
 			<br><br>
 		<?php } else { foreach($albumlist as $album){ 
@@ -786,8 +651,7 @@ if (document.listalbum.selection.value != null) {
 			echo "Hello <a href='".$docroot."account.php'>". $loggedInUser->clean_username . "</a><br>";
 		}
 		?>
-	<h4>Switch to
-	<a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=detailed&dropname='.$dropname; ?>">detailed view</a> to see more information about these assets, or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=media&dropname='.$dropname; ?>">sorted by date</a> or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=albums&dropname='.$dropname; ?>">sorted by album</a>.</h4>
+	<h4>View assets	<a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=media&dropname='.$dropname; ?>">sorted by date</a> or <a href="<?php echo $_SERVER['PHP_SELF'] . '?viewmode=albums&dropname='.$dropname; ?>">sorted by album</a>.</h4>
 		<br />
 		<?php
 		foreach($alltypes as $type){
@@ -814,7 +678,7 @@ if (document.listalbum.selection.value != null) {
 
 
 
-<?php if($loggedInUser && $loggedInUser->clean_username == $owner && isUserLoggedIn() && $_REQUEST['viewmode'] != 'detailed') {
+<?php if($loggedInUser && $loggedInUser->clean_username == $owner && isUserLoggedIn()) {
 if(!($_REQUEST['album'])) {
 ?>
 <div id="uploader" style="background:#ffffff;-moz-border-radius:20px;-webkit-border-radius:20px;width:660px;padding:10px 20px 20px 20px;margin-top:30px">
@@ -1053,8 +917,7 @@ foreach ($albums[$album] as $name=>$a) {
 				}
 				$metadata .= "/></td></tr></table>";
 				$metadata .= '<input type="button" value="Save"';
-//Data should pass through function that turns data into object, then to updateAsset()
-				$metadata .= " onclick=\"grabMetadata('".$a->name."');\" />";
+				$metadata .= " onclick=\"grabMetadata('".$a->name."','noteless');\" />";
 				$metadata .= "</form></div></div>";
 
 
@@ -1196,16 +1059,49 @@ foreach ($assets as $name=>$a) {
 				$jsondata = json_decode($data);
 
 				$metadata  = "<div class='metadata' id='wrap_je_".$a->name."' style='display:none;'>";
-				$metadata .= "<div class='metadata' id='je_".$a->name."' '></div>";
-				$metadata .= "<script type='text/javascript'>$(function(){";
-				$metadata .= "je=$('#je_".$a->name."');";
-				$metadata .= "je.jsoneditor('init', {
-						root:'metadata',
-						data:" . $data . "});});";
-				$metadata .= "</script>";
-				$metadata .= '<input type="button" value="save"';
-				$metadata .= " onclick=\"updateAsset('".$a->name."',$('#je_".$a->name."').jsoneditor('getjson'));\" />";
-				$metadata .= "</div>";
+				$metadata .= "<div class='metadata' id='je_".$a->name."' '>";
+				$metadata .= "<form><table>";
+				if($a->type == 'note') {
+					$metadata .= "<tr><td>Band Name:</td><td><input type='text' id='$a->name-bandname' value='$jsondata->bandname' /></td></tr>";
+					$metadata .= "<tr><td>Hometown:</td><td><input type='text' id='$a->name-hometown' value='$jsondata->hometown' /></td></tr>";
+					$metadata .= "<tr><td>Genres:</td><td><input type='text' id='$a->name-bandgenres' value='$jsondata->bandgenre' /></td></tr>";
+					$metadata .= "<tr><td>Years Active:</td><td><input type='text' id='$a->name-yearsactive' value='$jsondata->yearsactive' /></td></tr>";
+					$metadata .= "<tr><td>Members:</td><td><input type='text' id='$a->name-members' value='$jsondata->members' /></td></tr>";
+					$metadata .= "<tr><td>Motto:</td><td><input type='text' id='$a->name-motto' value='$jsondata->motto' /></td></tr>";
+					$metadata .= "</table>";
+					$metadata .= '<input type="button" value="Save"';
+					$metadata .= " onclick=\"grabMetadata('".$a->name."','note');\" />";
+				} else {
+					$metadata .= "<tr><td>Title:</td><td><input type='text' id='$a->name-title' value='$jsondata->title' /></td></tr>";
+					$metadata .= "<tr><td>Album:</td><td><input type='text' id='$a->name-album' value='$jsondata->album' /></td></tr>";
+					if($a->type == 'audio') {
+						$metadata .= "<tr><td>Track #:</td><td><input type='text' id='$a->name-tracknum' value='$jsondata->tracknum' /></td></tr>";
+						$metadata .= "<tr><td>Year:</td><td><input type='text' id='$a->name-year' value='$jsondata->year' /></td></tr>";
+						$metadata .= "<tr><td>Genre:</td><td><input type='text' id='$a->name-genre' value='$jsondata->genre' /></td></tr>";
+						$metadata .= "<tr><td>BPM:</td><td><input type='text' id='$a->name-bpm' value='$jsondata->bpm' /></td></tr>";
+						$metadata .= "<tr><td>Composer:</td><td><input type='text' id='$a->name-composer' value='$jsondata->composer' /></td></tr>";
+						$metadata .= "<tr><td>Featured 3?:</td><td><input type='checkbox' id='$a->name-featured3' ";
+						if($jsondata->featured3 == 'true') {
+							$metadata .= "checked ";
+						}
+						$metadata .= "/></td></tr>";
+					} else if($a->type = 'image') {
+						$metadata .= "<tr><td>Is Album Cover?:</td><td><input type='checkbox' id='$a->name-isalbumcover' ";
+						if($jsondata->isalbumcover == 'true') {
+							$metadata .= "checked ";
+						}
+						$metadata .= "/></td></tr>";
+					}
+					$metadata .= "<tr><td>Allow Download?:</td><td><input type='checkbox' id='$a->name-allowdownload' ";
+					if($jsondata->allowdownload == 'true') {
+						$metadata .= "checked ";
+					}
+					$metadata .= "/></td></tr>";
+					$metadata .= "</table>";
+					$metadata .= '<input type="button" value="Save"';
+					$metadata .= " onclick=\"grabMetadata('".$a->name."','noteless');\" />";
+				}
+				$metadata .= "</form></div></div>";
 
 				if($_REQUEST['title'] && $jsondata->title != $_REQUEST['title']) {
 					continue;
